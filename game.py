@@ -11,7 +11,8 @@ PALETTES = [
     {"name": "Emerald vs Gold",          "player": (30, 200, 120, 255), "ai": (245, 200, 70, 255)},
 ]
 
-GRID_WARM = (255, 190, 130, 85)
+GRID_WARM = (70, 200, 255, 255)  # bright neon blue grid
+
 WALL_WARM = (255, 200, 150, 110)
 
 # ---------- COLOR UTIL ----------
@@ -61,11 +62,11 @@ class FollowCam:
         tp = self.target.world_position + (self.target.forward * -self.distance) + Vec3(0, self.height, 0)
         camera.position = lerp(camera.position, tp, time.dt * 5)
         camera.look_at(self.target.world_position + Vec3(0, 1.2, 0))
-        camera.rotation_z = lerp(camera.rotation_z, (held_keys['d'] - held_keys['a']) * 4, time.dt * 6)
+        camera.rotation_z = lerp(camera.rotation_z, (held_keys['d'] - held_keys['a']) *4 , time.dt * 6)
 
 # ---------- GRID ----------
 class SoftGrid:
-    def __init__(self, bounds=72.0, step=18, thickness=0.05, base_alpha=70, fade_range=48):
+    def __init__(self, bounds=72.0, step=18, thickness=0.5, base_alpha=255, fade_range=48):
         self.bounds = float(bounds)
         self.step = int(step)
         self.thickness = thickness
@@ -97,12 +98,7 @@ class SoftGrid:
             base = L["base"]
             new_alpha = max(0.03, base.a * f)
             L["ent"].color = Color(base.r, base.g, base.b, new_alpha)
-    def gentle_pulse(self, t):
-        delta = 0.005 * math.sin(t * 0.9)
-        for L in self.lines:
-            c = L["ent"].color
-            a = max(0.02, min(1.0, c.a + delta))
-            L["ent"].color = Color(c.r, c.g, c.b, a)
+    # gentle_pulse removed
 
 # ---------- BOUNDARY WALLS ----------
 class BoundaryWalls:
@@ -116,7 +112,7 @@ class BoundaryWalls:
             Entity(model='cube', shader=unlit_shader, color=col, position=( b, h/2, 0), scale=(t, h, span)),
             Entity(model='cube', shader=unlit_shader, color=col, position=(-b,h/2, 0), scale=(t, h, span)),
         ]
-        for w in self.walls: w.texture = None
+        
 
 # ---------- TRAILS ----------
 class SmoothTrail:
@@ -258,10 +254,14 @@ class TronGame:
         DirectionalLight().enabled = False
         AmbientLight(color=color.rgb(0,0,0))
 
+     
+
+
         self.bounds = 72.0
         self.grid   = SoftGrid(bounds=self.bounds, step=18, thickness=0.05, base_alpha=70, fade_range=48)
         self.walls  = BoundaryWalls(bounds=self.bounds, height=0.5, thickness=0.20, color_rgba=WALL_WARM)
 
+        # Use a single fixed palette (no cycling)
         self.palette_index = 0
         pcol = PALETTES[self.palette_index]["player"]
         acol = PALETTES[self.palette_index]["ai"]
@@ -277,37 +277,21 @@ class TronGame:
 
         self.menu_panel = None
         self.match_over = False
+        
 
         self.status = Text("", origin=(0,0), scale=1.5, y=0.42, color=color.white)
-        # Centered horizontally, placed low near bottom edge
+        
         self.hint = Text(
-        "W/S move • A left • D right • C cycle colours • Q reset",
-        origin=(0, -0.5),      # centers horizontally
-        x=0,                   # dead center
-        y=-0.47,               # move down near bottom edge
+        "W/S move • A left • D right • Q reset",
+        origin=(0, -0.5),
+        x=0,
+        y=-0.47,
         scale=0.85,
         color=color.rgba(255, 255, 255, 150)
         )
-
-
-        self.apply_palette(self.palette_index)
-
-    def apply_palette(self, idx):
-        self.palette_index = idx % len(PALETTES)
-        p = PALETTES[self.palette_index]
-        player_col = p["player"]
-        ai_col = p["ai"]
-
-        self.player.set_color(player_col)
-        self.ai.set_color(ai_col)
-
-        self.win_player_color = make_color(player_col, alpha=1.0)
-        self.win_ai_color = make_color(ai_col, alpha=1.0)
-
-        self.hint.text = f"W/S move • A left • D right • C cycle colours • Q reset  —  Palette: {p['name']}"
-
-    def cycle_palette(self):
-        self.apply_palette(self.palette_index + 1)
+       
+        self.win_player_color = make_color(pcol, alpha=1.0)
+        self.win_ai_color     = make_color(acol, alpha=1.0)
 
     def clamp_bounds(self, e):
         b = self.bounds
@@ -366,13 +350,8 @@ class TronGame:
 
     def update(self):
         dt = time.dt; self.t += dt
+        
 
-        if held_keys['c']:
-            if not hasattr(self, "_c_held") or not self._c_held:
-                self.cycle_palette()
-                self._c_held = True
-        else:
-            self._c_held = False
 
         if held_keys['q']:
             if not hasattr(self, "_q_held") or not self._q_held:
@@ -397,10 +376,11 @@ class TronGame:
 
         self.cam.update()
         self.grid.fade_with_distance(self.player.position)
-        self.grid.gentle_pulse(self.t)
+        
 
 # ---------- RUN ----------
 app = Ursina()
 game = TronGame()
 def update(): game.update()
 app.run()
+
