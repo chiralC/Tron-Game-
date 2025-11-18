@@ -204,7 +204,7 @@ class Trail:
         #so basically if the length of the trail is less than the min distance required to be travlled by the car to leave behind a trail
         #then return None,i.e. to not create any trails. 
         mid = (a + b) / 2   #mid is the midpoint of the start and end of the trail. this is where the new trail will begin at. 
-        angle = math.degrees(math.atan2(d.x, d.z))
+        angle = math.degrees(math.atan2(d.x, d.z))  
         #math.atan2 calculates the angle of the vector d
         #atan2(a,b) gives you the arctan of y/x,i.e. tan inverse(y/x). here we get tan inverse(d.x/d.z). d.x gives x component of d. 
         #d.z gives z component of d. 
@@ -227,6 +227,7 @@ class Trail:
         #the step method is called on every frame of the game to update the trail based on the car's new position (pos3d)
         p = Vec3(pos3d.x, 0, pos3d.z)   #creates 2D vector of the car's current position ignoring the height (y=0)
         if self.last_pos is None:       #if there is no value for self.last_pos/no value has been set for self.last_pos
+            
             self.last_pos = p           #then it sets the current position of the car to the last position
             return                      #it returns nothing, i.e. exits the function because no trail can be drawn since there's only 
                                         #one point. 
@@ -235,11 +236,11 @@ class Trail:
         if dist >= self.min_segment*2.5:#if the car has moved a distance greater than or equal to the minimum distance required to be 
                                         #moved by the car to leave behind a trail time 2.5. 
                                         #WHY MULTIPLY BY 2.5?
-                                        #basically like a threshold number we have chosen to decide whether the distance travelled was
+                                        #Threshold check: only when the movement distance is large enough do we treat it specially. Multiplying self.min_segment by 2.5 creates a tolerance margin above the basic segment length. Practically this does three things: Filters tiny jitter: prevents creating many tiny segments when movement is negligible.Detects large moves: flags cases where the car jumped or moved a lot between samples (fast motion, lag, or a sharp turn).Controls smoothing subdivision: if the movement is substantially larger than min_segment, subdivide it into multiple smaller segments for a smooth trail rather than one long segment.
                                         #a lag spike due to car making a sharp turn or just a normal segment. 
                                         #if it is a normal segment spike, then follow the if block, since if conditoin will be true
                                         #otherwise follow the else block. 
-            steps = max(2, int(dist / self.min_segment))    #WTF (?)
+            steps = max(2, int(dist / self.min_segment))    #decides how many segments to create
             prev = self.last_pos                            #the previous position of the player's car 
             #the loop below repeatedly calculates small steps and calls the self.add_segment method on each step so as to create/draw a
             #very smooth curve/line/segment which is the trail instead of creating just a long straight line. 
@@ -445,7 +446,6 @@ class AIBike(Entity):
         #self.world_position gives the current absolute position of the object self in the game world
         #so self.world_position + self.forward*7.0 = ahead. so ahead is basically a 3D coordinate point that is always at a distance of 7
         #units from the current position of the AI Bike. 
-        #NOW WHY DID'NT WE USE THE self.position instead of self.world_position?
         #ANSWER : Because self.position gives the position of the object self with respect to/relative to its parent. 
         #If AIBike doesn't have any parent class then self.position and self.world_position will basically give the same position. 
         if abs(ahead.x)>self.arena_bounds-5 or abs(ahead.z)>self.arena_bounds-5:    #checking if the x or y coordinate of this area is
@@ -511,7 +511,7 @@ class TronGame:
         self.cam = ChaseCam(self.player)    #creates an object of class ChaseCam to chase the player's bike. 
         self.over = False                   #self.over = False since the game is running. If/when the game is over, it will be = True. 
         #below are basically code for menu ui
-        self.menu_panel = None              #(????)
+        self.menu_panel = None             
         self.status = Text("", origin=(0,0), scale=1.5, y=0.42, color=color.white)  
         self.hint = Text("W/S move • A left • D right • Q reset", origin=(0, -0.5), x=0, y=-0.47, scale=0.85, color=color.rgba(255,255,255,150))
         self.win_color = color_tuple_to_color(col_player, alpha=1.0)
@@ -603,7 +603,7 @@ class TronGame:
                 self.restart()
                 self._q_held = True #now make the self._q_held==True. 
         else:
-            self._q_held = False   #?????????? WTF
+            self._q_held = False  
 
         if self.over: return
         #if the game is over, i.e. self.over==True, then exit the function. 
@@ -629,5 +629,5 @@ class TronGame:
 
 app = Ursina()      #initialises the entire Ursina game engine and creates the game's application window
 game = TronGame()   #game is an instance object of TronGame class
-def update(): game.update() #??
-app.run()                   #??
+def update():game.update() 
+app.run()                   
